@@ -1,0 +1,9 @@
+/*!
+    @import /amethyst_window/src/config.rs#DisplayConfig
+    DisplayConfig
+*/
+
+(
+  title: "Curling?",
+  dimensions: Some((450, 800)),
+)
