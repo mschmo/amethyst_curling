@@ -37,7 +37,7 @@ Mechanics that will differ or are not present in the pong tutorial:
   
 In [this section](https://book.amethyst.rs/stable/pong-tutorial/pong-tutorial-02.html) of the tutorial we're going to add a struct for one of the game's main entities, the paddle. But let's switch that with a curling stone. Basically everywhere the pong tutorial uses `Paddle`, I will use `Stone`.  
 
-I drew two curling stones, one with a blue handle and one with a red handle, as well as the target area. The stones are 16x16 pixels and the target is 128x128 pixels. Those sprites now live in this [sprite sheet](https://github.com/mschmo/amethyst_curling/assets/texture/curling_spritesheet.png) which I made using the pixel art editor [aesperite](https://www.aseprite.org/).
+I drew two curling stones, one with a blue handle and one with a red handle, as well as the target area. The stones are 16x16 pixels and the target is 128x128 pixels. Those sprites now live in this [sprite sheet](https://github.com/mschmo/amethyst_curling/blob/master/assets/texture/curling_spritesheet.png) which I made using the pixel art editor [aesperite](https://www.aseprite.org/).
 
 I followed the tutorial along for a bit to the point where I was ready to test drawing out a curling stone of each color, and display them both in the center of the screen. There wasn't too much code that I needed change from the tutorial - mostly sprite sheet coordinate settings. So let's try it out...
 
