@@ -3,33 +3,32 @@ use amethyst::{
     core::transform::Transform,
     ecs::prelude::{Component, DenseVecStorage},
     prelude::*,
-    renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
-    window::ScreenDimensions
+    renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
+               debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams}
+    }
 };
-
-
-// display.ron => dimensions: Some((450, 800)),
-pub const ARENA_WIDTH: f32 = 450.0 / 2.0;
-pub const ARENA_HEIGHT: f32 = 800.0 / 2.0;
-// TODO: Use radius instead?
-pub const STONE_HEIGHT: f32 = 16.0 / 2.0;
-pub const STONE_WIDTH: f32 = 16.0 / 2.0;
-
 
 // main game struct
 pub struct Curling;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+// display.ron => dimensions: Some((450, 800)),
+pub const ARENA_WIDTH: f32 = 450.0 / 2.0;
+pub const ARENA_HEIGHT: f32 = 800.0 / 2.0;
+pub const STONE_RADIUS: f32 = 16.0 / 2.0;
+
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum StoneColor {
     Red,
     Blue
 }
 
 // What properties make sense for a curling stone?
+#[derive(Copy, Clone)]
 pub struct Stone {
     pub color: StoneColor,
-    pub width: f32,
-    pub height: f32
+    pub radius: f32,
+    pub velocity: [f32; 2],
 }
 
 // This allows the app to close
@@ -40,13 +39,21 @@ impl SimpleState for Curling {
         let world = data.world;
         let sprite_sheet_handle = load_sprite_sheet(world);
 
+
+        // Setup debug lines as a resource
+        world.insert(DebugLines::new());
+        // Configure width of lines. Optional step
+        world.insert(DebugLinesParams { line_width: 2.0 });
+
+
+
         // There must be a better way to do this. And there is...
         // Once we add systems, any component that a system operates on will also be registered.
         world.register::<Stone>();
         // TODO: Don't just clone everything
         init_stones(world, sprite_sheet_handle.clone());
         init_target(world, sprite_sheet_handle);
-        initialise_camera(world);
+        init_camera(world);
     }
 
 }
@@ -55,8 +62,8 @@ impl Stone {
     fn new(color: StoneColor) -> Stone {
         Stone {
             color,
-            width: STONE_WIDTH,
-            height: STONE_HEIGHT
+            radius: STONE_RADIUS,
+            velocity: [0.0, 0.0]
         }
     }
 }
@@ -66,7 +73,7 @@ impl Component for Stone {
 }
 
 
-fn initialise_camera(world: &mut World) {
+fn init_camera(world: &mut World) {
     // Setup camera in a way that our screen covers whole arena and (0, 0) is in the bottom left.
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 1.0);
@@ -85,15 +92,15 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         sprite_sheet: sprite_sheet.clone(),
         sprite_number: 0,
     };
-    let sprite_render_red = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 1,
-    };
+//    let sprite_render_red = SpriteRender {
+//        sprite_sheet: sprite_sheet.clone(),
+//        sprite_number: 1,
+//    };
 
     let mut transform_blue = Transform::default();
-    let mut transform_red = Transform::default();
-    transform_blue.set_translation_xyz(ARENA_WIDTH / 2.0 - 10.0, ARENA_HEIGHT / 6.0, 0.0);
-    transform_red.set_translation_xyz(ARENA_WIDTH / 2.0 + 10.0, ARENA_HEIGHT / 6.0, 0.0);
+    // let mut transform_red = Transform::default();
+    transform_blue.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 6.0, 0.0);
+    // transform_red.set_translation_xyz(ARENA_WIDTH / 2.0 + 10.0, ARENA_HEIGHT / 6.0, 0.0);
 
     world
         .create_entity()
@@ -102,12 +109,13 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(transform_blue)
         .build();
 
-    world
-        .create_entity()
-        .with(sprite_render_red.clone())
-        .with(Stone::new(StoneColor::Red))
-        .with(transform_red)
-        .build();
+    // TODO: Someday we will work with multiple stones :)
+//    world
+//        .create_entity()
+//        .with(sprite_render_red.clone())
+//        .with(Stone::new(StoneColor::Red))
+//        .with(transform_red)
+//        .build();
 }
 
 fn init_target(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {

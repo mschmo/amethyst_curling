@@ -1,18 +1,116 @@
-
-  
-    
 ## Development Log For [My First Game Jam](https://itch.io/jam/my-first-game-jam-winter-2020)  
 
 ---
 
-This is a 2 week jam (1/25 - 2/8). I'm building a curling game using Rust and a framework that I have little-to-no experience with.
+I'm building a curling game using Rust and a framework that I have little-to-no experience with. I have 2 weeks to finish. Let's learn as we go.
 
 Here are my daily logs:
 
 * [Day 1 - 1/28](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-1-2020-01-28)
 * [Day 2 - 1/29](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-2-2020-01-29)
+* [Day 3 - 1/31](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-3-2020-01-31)
 
 ---
+
+### Day 3 [2020-01-31]  
+  
+*This log is a WIP. I've been working fast and loose in the past 24 hours, and haven't had a time to organize and edit these thoughts, so ATM this is not very readable. Just a random/incoherent dump of my thoughts from the day which I will try to clean up and put in a more presentable format.*
+
+Good ol' Entity Component System. We've added some entities (e.g. `Stone`) and components (e.g. `Transform`). Today, we're going to add our first system to the game (possibly multiple, I have no idea how this day is gonna go yet). Systems are objects that represent operations over entities. So I'm thinking we'll have a system to move our stones, as well as one to detect for collisions between them.
+
+We're also going to add a system that will move a curling stone in the direction of a mouse click. Crap I might need to skip to chapter 4.4 for this, as the stone movement will be much more similar to that of the ball in pong. I'm gonna read through them both first and then determine the which features from both should apply to the curling stones.  
+  
+Getting the mouse position and checking when the left mouse button is pressed:  
+```  
+Some((59.273438, 721.9922))  
+Some((59.273438, 721.9922))  
+Some((44.875, 740.5508))  
+Some((44.875, 740.5508))  
+Some((39.273438, 744.91406))  
+Some((39.273438, 744.91406))  
+```
+But there's a major problem. Our mouse position has coordinates for a completely different plane than our stones do.
+
+I didn't realize this at first. I was getting some super funky results when attempting to compare a stone's position to the mouse cursor. The stone is sitting on a plane whose origin (0, 0) is sitting in the middle of the camera. Our mouse's origin however is at the top left of the screen. *TODO: Verify what I just said and provide a diagram that shows the two coordinate planes on top of each other*
+*More TODO: Show investigation of how we solved this. 1) Searching on discord 2) Looking at the mouse_raytrace.rs example 3) Any tweaks I made from the example to adapt to our game*
+
+I found a question posed by someone on discord who is trying to accomplish the same thing as me:
+
+![discord help](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_3_discord_help.png)
+
+
+It was at this point that I just started going wild, making changes left and right. Adding velocity here. Adding acceleration there. Mutating every entity and component I can get my hands on. And committing absolutely nothing with git! Whatever happens happens!
+  
+Here's a basic question. How do things move? This looks like it could be useful:
+
+```rust
+/// Move relatively to its current position and orientation.
+///  
+/// For example, if the object is rotated 45 degrees about its Y axis,
+/// then you append a translation along the Z axis, that Z axis is now
+/// rotated 45 degrees, and so the appended translation will go along that
+/// rotated Z axis.
+///
+/// Equivalent to rotating the translation by the transform's current
+/// rotation before applying.
+#[inline]
+pub fn append_translation(&mut self, translation: Vector3<f32>) -> &mut Self {
+    self.isometry.translation.vector += self.isometry.rotation * translation;
+    self
+}
+```
+
+One thing I am beginning to notice is compile times. Every time I modify a single line of code, I have to wait another ~30 seconds to test the game. I may ask around if there are any solutions to that, but for now I need to figure out how to best spend those extra 30 seconds.
+
+Welp, this is **disgusting**, but it works well enough:
+
+```rust
+for (stone, transform) in (&mut stones, &transforms).join() {
+  let x = match (end_world.coords.x - transform.translation().x) > 0.0 {
+  true => self.launch_velocity,
+  false => -self.launch_velocity
+    };
+  let y = match (end_world.coords.y - transform.translation().y) > 0.0 {
+  true => self.launch_velocity,
+  false => -self.launch_velocity
+    };
+  stone.velocity[0] = x;
+  stone.velocity[1] = y;
+  println!("Launch {:?} stone at initial velocity = {:?}", stone.color, stone.velocity);
+}
+``` 
+
+It hasn't clicked yet, but I get a feeling if I keep working at it things will eventually click.
+
+It's following but the angle is strange. It consistently stays at a 1,1 slope.
+
+There was an amethyst release today! Dope, so I probably don't need to be pinning a git git hash anymore, as this latest release should have everything I need.
+
+*TODO: Section on collision detection. 1) Show research/investigation. 2) Evaluating example from pong tutorial (between ball, walls, and paddles) 3) Formula used to detect collision between two circles*
+
+```rust
+let s1_s2_distance = ((s1_x - s2_x).powf(2.0) + (s1_y - s2_y).powf(2.0)).sqrt();
+match s1_s2_distance {
+  d if d <= s1.radius + s2.radius => println!("Ooh they're touching!"),
+  _ => println!("Not Touching")  
+}
+```
+
+So now we at least know when two stones are touching. Of course, we do absolutely nothing about it and allow the two stones to morph together. But we'll add some proper physics another day.
+*TODO: show gif of them overlapping with debug message stating the obvious*
+
+Overall, what did I learn about in this lesson?
+1. Ray Casting
+2. Collision Detection
+3. Systems in an ECS architecture
+
+Cool. And what are the next steps? Well, according to the tutorial we're suppose to start keeping score. But I may need to focus more on the core movement mechanics.
+
+*TODO: Talk about how you added a debug line drawing to indicate when a stone is being charged for a launch*
+
+Final product of the day:
+
+![launching stones](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_3_final.gif)
 
 ### Day 2 [2020-01-29]
 
@@ -47,7 +145,7 @@ Holy crap, that's doesn't seem very good, and our game is still a blank screen. 
   
 So what the heck does this error mean? I see this message:  
 ```  
-Failed to load asset with name "texture/pong_spritesheet.ron"  
+Failed to load asset with name "texture/curling_spritesheet.ron"  
 ```  
 As well references to a `Parser` and `ExpectedIdentifier`. Sounds like there is an problem parsing the sprite sheet's RON file. Let's check if there are any Github issues that could be related to this error.  
   
@@ -105,13 +203,16 @@ error: aborting due to previous error
 ```      
     
 Damn. New error. Seems likely this could be an issue with my version of amethyst not playing nice with the code I copied from the pong tutorial implementation. And the bug occurs in the section where we initialize this `RenderToWindow` guy:    
+
 ```rust    
 RenderToWindow::from_config_path(display_config_path)     
   .with_clear([1.0, 1.0, 1.0, 1.0]),    
   ```    
+
   I can see that `with_clear()` is still defined on the amethyst version I'm using, so I wonder if the type returned from `from_config_path` has changed. I see `Result` out front... so hey maybe this just needs unwrapped? I add a [? operator](https://doc.rust-lang.org/edition-guide/rust-2018/error-handling-and-panics/the-question-mark-operator-for-easier-error-handling.html) and boom we're golden. The game builds and runs. Love it.    
       
-Set the background to white so the ice graphics are complete:    
+Set the background to white so the ice graphics are complete:  
     
 ![ice ice baby](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_1.png)    
+
  Tomorrow night I will work on step 2 of the tutorial. It has us drawing the paddles. Instead I'll be drawing curling stones.

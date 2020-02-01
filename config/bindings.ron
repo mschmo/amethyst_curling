@@ -1,0 +1,8 @@
+(
+  axes: {
+    "stone": Emulated(pos: Key(W), neg: Key(S)),
+  },
+  actions: {
+    "launch_stone": [[Mouse(Left)]],
+  },
+)
