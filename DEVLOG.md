@@ -1,7 +1,5 @@
 ## Development Log For [My First Game Jam](https://itch.io/jam/my-first-game-jam-winter-2020)  
 
----
-
 I'm building a curling game using Rust and a framework that I have little-to-no experience with. I have 2 weeks to finish. Let's learn as we go.
 
 Here are my daily logs:
@@ -9,8 +7,32 @@ Here are my daily logs:
 * [Day 1 - 1/28](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-1-2020-01-28)
 * [Day 2 - 1/29](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-2-2020-01-29)
 * [Day 3 - 1/31](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-3-2020-01-31)
+* [Day 4 - 2/03](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-4-2020-02-03)
 
 ---
+
+### Day 4 [2020-02-03]
+
+I didn't do any work on this project in the past couple days. Instead I went snowboarding out in this frozen tundra of Winter Park, CO:
+
+[pic?]
+
+But we're back in action now. And what did we accomplish today?
+
+link of the day: https://www.gamedev.net/forums/topic/603877-can-somebody-explain-velocity-and-acceleration-in-laymans-terms/
+Things that I definitely sat through classes on, but now I'm actually excited to learn once I found a fun application for them in the real-word.
+The concept of a vector was lost on me in school. 
+
+* debug line expands to reflect power of shot (DONE)
+    * coordinate chart showing how the formula was figured out
+* fixing the angle of the shot (DONE)
+    * It's amazing how much of calculus from college I have already forgotten.
+    * https://gamedev.stackexchange.com/questions/25277/how-to-calculate-shot-angle-and-velocity-to-hit-a-moving-target
+    * https://math.stackexchange.com/questions/707673/find-angle-in-degrees-from-one-point-to-another-in-2d-space
+    * What's preferred, degrees or radians?
+    * https://en.wikipedia.org/wiki/Atan2
+    * well holy shit, atan2 for the angle and cos/sin on the angle for the velocity was the answer... but what does it mean?
+* adding actual collision (NOT DONE)
 
 ### Day 3 [2020-01-31]  
   

@@ -3,7 +3,10 @@ extern crate nalgebra as na;
 use amethyst::core::{Transform};
 use amethyst::core::geometry::{Plane};
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage, ReadExpect, Entities, Write};
+use amethyst::ecs::{
+    Join, System, SystemData,  // traits
+    Read, ReadStorage, WriteStorage, ReadExpect, Entities, Write  // structs
+};
 use amethyst::input::{InputHandler, StringBindings};
 use amethyst::renderer::debug_drawing::DebugLines;
 use amethyst::renderer::camera::{ActiveCamera, Camera};
@@ -53,14 +56,19 @@ impl<'s> System<'s> for LaunchStoneSystem {
                     if self.launch_velocity < MAX_LAUNCH_VELOCITY {
                         self.launch_velocity += LAUNCH_INCREMENT;
                     }
+                    let pct_charged = self.launch_velocity / MAX_LAUNCH_VELOCITY;
                     for (_, transform) in (&stones, &transforms).join() {
                         // TODO: Consolidate this with code from "launch" section
+                        // Draw the "power" line
                         let screen_dimensions = Vector2::new(dimensions.width(), dimensions.height());
                         let end_coordinate = Point3::new(mouse_position.0, mouse_position.1, camera_transform.translation().z);
                         let end_world = camera.projection().screen_to_world_point(end_coordinate, screen_dimensions, camera_transform);
+
+                        let end_x = transform.translation().x + ((end_world.coords.x - transform.translation().x) * pct_charged);
+                        let end_y = transform.translation().y + ((end_world.coords.y - transform.translation().y) * pct_charged);
                         debug_lines_resource.draw_line(
                             [transform.translation().x, transform.translation().y, 0.5].into(),
-                            [end_world.coords.x, end_world.coords.y, 0.5].into(),
+                            [end_x, end_y, 0.5].into(),
                             Srgba::new(1.0, 0.0, 0.2, 1.0),
                         );
                     }
@@ -103,20 +111,13 @@ impl<'s> System<'s> for LaunchStoneSystem {
                         .screen_ray(end_coordinate.xy(), screen_dimensions, camera_transform)
                         .intersect_plane(&plane);
 
-
-                    // TODO: Set the stone's velocities in the expected direction
                     for (stone, transform) in (&mut stones, &transforms).join() {
-                        let x = match (end_world.coords.x - transform.translation().x) > 0.0 {
-                            true => self.launch_velocity,
-                            false => -self.launch_velocity
-                        };
-                        let y = match (end_world.coords.y - transform.translation().y) > 0.0 {
-                            true => self.launch_velocity,
-                            false => -self.launch_velocity
-                        };
-                        stone.velocity[0] = x;
-                        stone.velocity[1] = y;
-                        println!("Launch {:?} stone at initial velocity = {:?}", stone.color, stone.velocity);
+                        // https://en.wikipedia.org/wiki/Atan2
+                        // atan2(y2 - y1, x2 - x1)
+                        let a = (end_world.coords.y - transform.translation().y).atan2(end_world.coords.x - transform.translation().x);
+                        stone.velocity[0] = a.cos() * self.launch_velocity;
+                        stone.velocity[1] = a.sin() * self.launch_velocity;
+                        // println!("Launch {:?} stone at initial velocity = {:?}", stone.color, stone.velocity);
                     }
 
                     self.is_charging = false;

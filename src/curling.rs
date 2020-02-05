@@ -135,10 +135,7 @@ fn init_target(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
-    // Load the sprite sheet necessary to render the graphics.
-    // The texture is the pixel data
-    // `texture_handle` is a cloneable reference to the texture
-    // equivalent to a reference-counted option
+    // `texture_handle` is a cloneable reference to the texture equivalent to a reference-counted option
     let texture_handle = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
