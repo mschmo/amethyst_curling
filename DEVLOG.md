@@ -8,8 +8,21 @@ Here are my daily logs:
 * [Day 2 - 1/29](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-2-2020-01-29)
 * [Day 3 - 1/31](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-3-2020-01-31)
 * [Day 4 - 2/03](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-4-2020-02-03)
+* [Day 5 - 2/06](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-5-2020-02-06)
 
 ---
+
+### Day 5 [2020-02-06]
+
+Couple days off. Watching Khan Academy videos on basic geometry, trig, calc and physics.
+
+TODO:
+* Take turns
+* Actually collide
+* Debug system
+* Added a `StoneState`
+
+https://rust-gamedev.github.io/posts/survey-01/
 
 ### Day 4 [2020-02-03]
 
@@ -32,6 +45,17 @@ The concept of a vector was lost on me in school.
     * What's preferred, degrees or radians?
     * https://en.wikipedia.org/wiki/Atan2
     * well holy shit, atan2 for the angle and cos/sin on the angle for the velocity was the answer... but what does it mean?
+    
+We can use `Atan2(y_mouse - y_stone, x_mouse - x_stone)` to get the angle between the ray from the stone to the mouse and the positive x-axis.
+
+```rust
+for (stone, transform) in (&mut stones, &transforms).join() {
+    let a = (end_world.coords.y - transform.translation().y).atan2(end_world.coords.x - transform.translation().x);
+    stone.velocity[0] = a.cos() * self.launch_velocity;
+    stone.velocity[1] = a.sin() * self.launch_velocity;
+}
+```
+
 * adding actual collision (NOT DONE)
 
 ### Day 3 [2020-01-31]  

@@ -7,14 +7,15 @@ use amethyst::{
                debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams}
     }
 };
+use crate::curling::StoneState::ReadyToLaunch;
 
 // main game struct
 pub struct Curling;
 
 // display.ron => dimensions: Some((450, 800)),
-pub const ARENA_WIDTH: f32 = 450.0 / 2.0;
-pub const ARENA_HEIGHT: f32 = 800.0 / 2.0;
-pub const STONE_RADIUS: f32 = 16.0 / 2.0;
+pub const ARENA_WIDTH: f32 = 450. / 2.;
+pub const ARENA_HEIGHT: f32 = 800. / 2.;
+pub const STONE_RADIUS: f32 = 16. / 2.;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -23,9 +24,17 @@ pub enum StoneColor {
     Blue
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum StoneState {
+    ReadyToLaunch,
+    InPlay,
+    Stopped
+}
+
 // What properties make sense for a curling stone?
 #[derive(Copy, Clone)]
 pub struct Stone {
+    pub state: StoneState,
     pub color: StoneColor,
     pub radius: f32,
     pub velocity: [f32; 2],
@@ -39,13 +48,10 @@ impl SimpleState for Curling {
         let world = data.world;
         let sprite_sheet_handle = load_sprite_sheet(world);
 
-
         // Setup debug lines as a resource
         world.insert(DebugLines::new());
         // Configure width of lines. Optional step
         world.insert(DebugLinesParams { line_width: 2.0 });
-
-
 
         // There must be a better way to do this. And there is...
         // Once we add systems, any component that a system operates on will also be registered.
@@ -61,6 +67,20 @@ impl SimpleState for Curling {
 impl Stone {
     fn new(color: StoneColor) -> Stone {
         Stone {
+            state: StoneState::ReadyToLaunch,
+            color,
+            radius: STONE_RADIUS,
+            velocity: [0.0, 0.0]
+        }
+    }
+
+    pub fn set_state(&mut self, state: StoneState) {
+        self.state = state;
+    }
+
+    fn _dbg_new_stopped(color: StoneColor) -> Stone {
+        Stone {
+            state: StoneState::Stopped,
             color,
             radius: STONE_RADIUS,
             velocity: [0.0, 0.0]
@@ -92,15 +112,15 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         sprite_sheet: sprite_sheet.clone(),
         sprite_number: 0,
     };
-//    let sprite_render_red = SpriteRender {
-//        sprite_sheet: sprite_sheet.clone(),
-//        sprite_number: 1,
-//    };
+    let sprite_render_red = SpriteRender {
+        sprite_sheet: sprite_sheet.clone(),
+        sprite_number: 1,
+    };
 
     let mut transform_blue = Transform::default();
-    // let mut transform_red = Transform::default();
-    transform_blue.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT / 6.0, 0.0);
-    // transform_red.set_translation_xyz(ARENA_WIDTH / 2.0 + 10.0, ARENA_HEIGHT / 6.0, 0.0);
+    let mut transform_red = Transform::default();
+    transform_blue.set_translation_xyz(ARENA_WIDTH / 2., ARENA_HEIGHT / 6., 0.);
+    transform_red.set_translation_xyz(ARENA_WIDTH / 2., ARENA_HEIGHT / 3., 0.);
 
     world
         .create_entity()
@@ -110,12 +130,12 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .build();
 
     // TODO: Someday we will work with multiple stones :)
-//    world
-//        .create_entity()
-//        .with(sprite_render_red.clone())
-//        .with(Stone::new(StoneColor::Red))
-//        .with(transform_red)
-//        .build();
+    world
+        .create_entity()
+        .with(sprite_render_red.clone())
+        .with(Stone::new(StoneColor::Red))
+        .with(transform_red)
+        .build();
 }
 
 fn init_target(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {

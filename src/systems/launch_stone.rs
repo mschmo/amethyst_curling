@@ -15,7 +15,7 @@ use amethyst::window::ScreenDimensions;
 use na::{Vector2};
 use na::geometry::{Point3};
 
-use crate::curling::{Stone};
+use crate::curling::{Stone, StoneState};
 
 
 const MAX_LAUNCH_VELOCITY: f32 = 100.0;
@@ -41,6 +41,17 @@ impl<'s> System<'s> for LaunchStoneSystem {
     );
 
     fn run(&mut self, (transforms, mut stones, input, active_camera, cameras, dimensions, mut debug_lines_resource, entities): Self::SystemData) {
+        let mut is_stone_ready_for_launch = false;
+        for stone in stones.join() {
+            if stone.state == StoneState::ReadyToLaunch {
+                is_stone_ready_for_launch = true;
+                break
+            }
+        }
+        if !is_stone_ready_for_launch {
+            return;
+        }
+
         if let Some(mouse_position) = input.mouse_position() {
             let mut camera_join = (&cameras, &transforms).join();
             if let Some((camera, camera_transform)) = active_camera.entity
@@ -117,6 +128,7 @@ impl<'s> System<'s> for LaunchStoneSystem {
                         let a = (end_world.coords.y - transform.translation().y).atan2(end_world.coords.x - transform.translation().x);
                         stone.velocity[0] = a.cos() * self.launch_velocity;
                         stone.velocity[1] = a.sin() * self.launch_velocity;
+                        stone.set_state(StoneState::InPlay);
                         // println!("Launch {:?} stone at initial velocity = {:?}", stone.color, stone.velocity);
                     }
 
