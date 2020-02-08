@@ -9,8 +9,16 @@ Here are my daily logs:
 * [Day 3 - 1/31](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-3-2020-01-31)
 * [Day 4 - 2/03](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-4-2020-02-03)
 * [Day 5 - 2/06](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-5-2020-02-06)
+* [Day 6 - 2/08](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-6-2020-02-08)
 
 ---
+### Day 6 [2020-02-08]
+
+* UI Text
+* Actually rotate turns
+* Export (macOS) and upload to itch.io
+
+![final project, but still wip...](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_6_final.gif)
 
 ### Day 5 [2020-02-06]
 
@@ -19,10 +27,9 @@ Couple days off. Watching Khan Academy videos on basic geometry, trig, calc and 
 TODO:
 * Take turns
 * Collision detection
-* UiText (debug)
 * Added a `StoneState`
 
-![discord help](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_5_col_detection.gif)
+![detecting collisions](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_5_col_detection.gif)
 
 https://rust-gamedev.github.io/posts/survey-01/
 

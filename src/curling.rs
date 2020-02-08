@@ -51,6 +51,7 @@ pub struct DebugScreen {
 
 pub struct DebugText {
     pub turn_num_report: Entity,
+    pub player_turn_report: Entity,
     pub in_play_report: Entity,
     pub collision_report: Entity
 }
@@ -135,8 +136,8 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
 
     let mut transform_blue = Transform::default();
     let mut transform_red = Transform::default();
-    transform_blue.set_translation_xyz(ARENA_WIDTH / 2., ARENA_HEIGHT / 6., 0.);
-    transform_red.set_translation_xyz(ARENA_WIDTH / 2., ARENA_HEIGHT / 3., 0.);
+    transform_blue.set_translation_xyz(ARENA_WIDTH / 2. - 20., ARENA_HEIGHT / 5., 0.);
+    transform_red.set_translation_xyz(ARENA_WIDTH / 2. + 20., ARENA_HEIGHT / 5., 0.);
 
     world
         .create_entity()
@@ -148,7 +149,7 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     world
         .create_entity()
         .with(sprite_render_red.clone())
-        .with(Stone::new(StoneColor::Red))
+        .with(Stone::_dbg_new_stopped(StoneColor::Red))
         .with(transform_red)
         .build();
 }
@@ -173,7 +174,7 @@ fn _new_ui_transform(report_name: &str, y: f32) -> UiTransform {
      UiTransform::new(
         report_name.to_string(),
         Anchor::Middle, Anchor::Middle,
-        -50., -50., 1., 200., 50.
+        -50., y, 1., 200., 50.
     )
 }
 
@@ -186,20 +187,18 @@ fn init_debug_screen(world: &mut World) {
         &world.read_resource(),
     );
     let turn_num_trans = _new_ui_transform("turn_num_report", -50.);
-    let in_play_trans = UiTransform::new(
-        "in_play_report".to_string(),
-        Anchor::Middle, Anchor::Middle,
-        -50., -65., 1., 200., 50.
-    );
-    let collision_trans = UiTransform::new(
-        "collision_report".to_string(),
-        Anchor::Middle, Anchor::Middle,
-        -50., -80., 1., 200., 50.
-    );
+    let player_turn_trans = _new_ui_transform("player_turn_report", -65.);
+    let in_play_trans = _new_ui_transform("in_play_report", -80.);
+    let collision_trans = _new_ui_transform("collision_report", -95.);
     let turn_num_report = world
         .create_entity()
         .with(turn_num_trans)
         .with(UiText::new(font.clone(), "Turn: 0".to_string(), [0., 0., 0., 1.], 12.,))
+        .build();
+    let player_turn_report = world
+        .create_entity()
+        .with(player_turn_trans)
+        .with(UiText::new(font.clone(), "Player: Blue".to_string(), [0., 0., 0., 1.], 12.,))
         .build();
     let in_play_report = world
         .create_entity()
@@ -211,7 +210,7 @@ fn init_debug_screen(world: &mut World) {
         .with(collision_trans)
         .with(UiText::new(font.clone(), "Collision: False".to_string(), [0., 0., 0., 1.], 12.,))
         .build();
-    world.insert(DebugText { turn_num_report, in_play_report, collision_report });
+    world.insert(DebugText { turn_num_report, player_turn_report, in_play_report, collision_report });
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {

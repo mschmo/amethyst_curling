@@ -12,7 +12,7 @@ use amethyst::{
     ui::UiText,
 };
 
-use crate::curling::{DebugScreen, DebugText, Stone, StoneState};
+use crate::curling::{DebugScreen, DebugText, Stone, StoneState, StoneColor};
 
 #[derive(SystemDesc)]
 pub struct ChangeTurnSystem;
@@ -43,7 +43,17 @@ impl<'s> System<'s> for ChangeTurnSystem {
             stats.in_play = false;
             stats.turn_num += 1;
             for stone in (&mut stones).join() {
-                stone.set_state(StoneState::ReadyToLaunch);
+                if stats.turn_num % 2 == 0 && stone.color == StoneColor::Blue {
+                    stone.set_state(StoneState::ReadyToLaunch);
+                    if let Some(text) = ui_text.get_mut(screen_text.player_turn_report) {
+                        text.text = "Player: Blue".to_string();
+                    }
+                } else if stats.turn_num % 2 != 0 && stone.color == StoneColor::Red {
+                    stone.set_state(StoneState::ReadyToLaunch);
+                    if let Some(text) = ui_text.get_mut(screen_text.player_turn_report) {
+                        text.text = "Player: Red".to_string();
+                    }
+                }
             }
         } else {
             stats.in_play = true;

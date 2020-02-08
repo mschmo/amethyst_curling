@@ -51,8 +51,7 @@ fn main() -> amethyst::Result<()> {
         .with(systems::LaunchStoneSystem::default(), "launch_stone_system", &["input_system"])
         .with(systems::MoveStoneSystem::default(), "move_stone_system", &["launch_stone_system"])
         .with(systems::CollideStoneSystem, "collide_stone_system", &["launch_stone_system"])
-        .with(systems::ChangeTurnSystem, "change_turn_system", &["launch_stone_system"])
-        .with(systems::DebugSystem::default(), "debug_system", &["input_system"]);
+        .with(systems::ChangeTurnSystem, "change_turn_system", &["launch_stone_system"]);
 
 
 

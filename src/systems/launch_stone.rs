@@ -68,7 +68,10 @@ impl<'s> System<'s> for LaunchStoneSystem {
                         self.launch_velocity += LAUNCH_INCREMENT;
                     }
                     let pct_charged = self.launch_velocity / MAX_LAUNCH_VELOCITY;
-                    for (_, transform) in (&stones, &transforms).join() {
+                    for (stone, transform) in (&stones, &transforms).join() {
+                        if stone.state != StoneState::ReadyToLaunch {
+                            continue;
+                        }
                         // TODO: Consolidate this with code from "launch" section
                         // Draw the "power" line
                         let screen_dimensions = Vector2::new(dimensions.width(), dimensions.height());
@@ -123,6 +126,9 @@ impl<'s> System<'s> for LaunchStoneSystem {
                         .intersect_plane(&plane);
 
                     for (stone, transform) in (&mut stones, &transforms).join() {
+                        if stone.state != StoneState::ReadyToLaunch {
+                            continue;
+                        }
                         // https://en.wikipedia.org/wiki/Atan2
                         // atan2(y2 - y1, x2 - x1)
                         let a = (end_world.coords.y - transform.translation().y).atan2(end_world.coords.x - transform.translation().x);
