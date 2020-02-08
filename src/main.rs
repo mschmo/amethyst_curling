@@ -8,6 +8,7 @@ use amethyst::{
         types::DefaultBackend,
         RenderingBundle,
     },
+    ui::{RenderUi, UiBundle},
     utils::application_root_dir,
 };
 
@@ -41,10 +42,12 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderFlat2D::default())
                 // TODO: Trying to use this to draw the line towards the mouse cursor when charging
                 // but I can't get it to work yet :(
-                .with_plugin(RenderDebugLines::default()),
+                .with_plugin(RenderDebugLines::default())
+                .with_plugin(RenderUi::default())
         )?
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
+        .with_bundle(UiBundle::<StringBindings>::new())?
         .with(systems::LaunchStoneSystem::default(), "launch_stone_system", &["input_system"])
         .with(systems::MoveStoneSystem::default(), "move_stone_system", &["launch_stone_system"])
         .with(systems::CollideStoneSystem, "collide_stone_system", &["launch_stone_system"])

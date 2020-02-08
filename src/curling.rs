@@ -1,11 +1,12 @@
 use amethyst::{
     assets::{AssetStorage, Loader, Handle},
     core::transform::Transform,
-    ecs::prelude::{Component, DenseVecStorage},
+    ecs::prelude::{Component, DenseVecStorage, Entity},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
                debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams}
-    }
+    },
+    ui::{Anchor, TtfFormat, UiText, UiTransform},
 };
 use crate::curling::StoneState::ReadyToLaunch;
 
@@ -40,6 +41,20 @@ pub struct Stone {
     pub velocity: [f32; 2],
 }
 
+
+#[derive(Default)]
+pub struct DebugScreen {
+    pub turn_num: u32,
+    pub in_play: bool,
+    pub is_colliding: bool
+}
+
+pub struct DebugText {
+    pub turn_num_report: Entity,
+    pub in_play_report: Entity,
+    pub collision_report: Entity
+}
+
 // This allows the app to close
 impl SimpleState for Curling {
 
@@ -60,6 +75,7 @@ impl SimpleState for Curling {
         init_stones(world, sprite_sheet_handle.clone());
         init_target(world, sprite_sheet_handle);
         init_camera(world);
+        init_debug_screen(world);
     }
 
 }
@@ -129,7 +145,6 @@ fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(transform_blue)
         .build();
 
-    // TODO: Someday we will work with multiple stones :)
     world
         .create_entity()
         .with(sprite_render_red.clone())
@@ -152,6 +167,51 @@ fn init_target(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         .with(sprite_render.clone())
         .with(transform)
         .build();
+}
+
+fn _new_ui_transform(report_name: &str, y: f32) -> UiTransform {
+     UiTransform::new(
+        report_name.to_string(),
+        Anchor::Middle, Anchor::Middle,
+        -50., -50., 1., 200., 50.
+    )
+}
+
+/// Initialises a ui scoreboard
+fn init_debug_screen(world: &mut World) {
+    let font = world.read_resource::<Loader>().load(
+        "font/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+    let turn_num_trans = _new_ui_transform("turn_num_report", -50.);
+    let in_play_trans = UiTransform::new(
+        "in_play_report".to_string(),
+        Anchor::Middle, Anchor::Middle,
+        -50., -65., 1., 200., 50.
+    );
+    let collision_trans = UiTransform::new(
+        "collision_report".to_string(),
+        Anchor::Middle, Anchor::Middle,
+        -50., -80., 1., 200., 50.
+    );
+    let turn_num_report = world
+        .create_entity()
+        .with(turn_num_trans)
+        .with(UiText::new(font.clone(), "Turn: 0".to_string(), [0., 0., 0., 1.], 12.,))
+        .build();
+    let in_play_report = world
+        .create_entity()
+        .with(in_play_trans)
+        .with(UiText::new(font.clone(), "In Play: False".to_string(), [0., 0., 0., 1.], 12.,))
+        .build();
+    let collision_report = world
+        .create_entity()
+        .with(collision_trans)
+        .with(UiText::new(font.clone(), "Collision: False".to_string(), [0., 0., 0., 1.], 12.,))
+        .build();
+    world.insert(DebugText { turn_num_report, in_play_report, collision_report });
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {

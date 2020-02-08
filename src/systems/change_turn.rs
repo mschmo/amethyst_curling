@@ -5,10 +5,14 @@ use amethyst::{
     core::transform::Transform,
     core::SystemDesc,
     derive::SystemDesc,
-    ecs::prelude::{Join, System, SystemData, World, WriteStorage},
+    ecs::prelude::{
+        Join, System, SystemData,
+        ReadExpect, World, Write, WriteStorage
+    },
+    ui::UiText,
 };
 
-use crate::curling::{Stone, StoneState};
+use crate::curling::{DebugScreen, DebugText, Stone, StoneState};
 
 #[derive(SystemDesc)]
 pub struct ChangeTurnSystem;
@@ -17,16 +21,39 @@ impl<'s> System<'s> for ChangeTurnSystem {
     type SystemData = (
         WriteStorage<'s, Stone>,
         WriteStorage<'s, Transform>,
+        WriteStorage<'s, UiText>,
+        Write<'s, DebugScreen>,
+        ReadExpect<'s, DebugText>
     );
 
-    fn run(&mut self, (mut stones, mut locals): Self::SystemData) {
+    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut stats, screen_text): Self::SystemData) {
         let mut all_stopped = true;
         for stone in stones.join() {
+            if stone.state == StoneState::ReadyToLaunch {
+                // Turn change has already happened, and we are ready to launch
+                return;
+            }
+
             if stone.state != StoneState::Stopped {
                 all_stopped = false;
                 break;
             }
         }
-        println!("All stones are stopped = {:?}", all_stopped);
+        if all_stopped {
+            stats.in_play = false;
+            stats.turn_num += 1;
+            for stone in (&mut stones).join() {
+                stone.set_state(StoneState::ReadyToLaunch);
+            }
+        } else {
+            stats.in_play = true;
+        }
+
+        if let Some(text) = ui_text.get_mut(screen_text.turn_num_report) {
+            text.text = format!("Turn: {}", stats.turn_num.to_string());
+        }
+        if let Some(text) = ui_text.get_mut(screen_text.in_play_report) {
+            text.text = format!("In Play: {}", stats.in_play.to_string());
+        }
     }
 }

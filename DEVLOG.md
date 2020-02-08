@@ -18,9 +18,11 @@ Couple days off. Watching Khan Academy videos on basic geometry, trig, calc and 
 
 TODO:
 * Take turns
-* Actually collide
-* Debug system
+* Collision detection
+* UiText (debug)
 * Added a `StoneState`
+
+![discord help](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_5_col_detection.gif)
 
 https://rust-gamedev.github.io/posts/survey-01/
 
@@ -55,8 +57,6 @@ for (stone, transform) in (&mut stones, &transforms).join() {
     stone.velocity[1] = a.sin() * self.launch_velocity;
 }
 ```
-
-* adding actual collision (NOT DONE)
 
 ### Day 3 [2020-01-31]  
   

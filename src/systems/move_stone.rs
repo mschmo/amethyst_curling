@@ -32,11 +32,26 @@ impl<'s> System<'s> for MoveStoneSystem {
             let vx = stone.velocity[0] * time.delta_seconds();
             let vy = stone.velocity[1] * time.delta_seconds();
             transform.append_translation(Vector3::new(vx, vy, 0.0));
-            stone.velocity[0] = stone.velocity[0] - DECELERATION;
-            stone.velocity[1] = stone.velocity[1] - DECELERATION;
 
-            if stone.velocity[0] <= 0.1 && stone.velocity[1] <= 0.1 {
-                stone.set_state(StoneState::ReadyToLaunch);
+            let v_x = stone.velocity[0];
+            let v_y = stone.velocity[1];
+            if v_x > DECELERATION {
+                stone.velocity[0] -= DECELERATION;
+            } else if v_x.abs() >= 0. && v_x.abs() <= DECELERATION + 0.1 {
+                stone.velocity[0] = 0.;
+            } else {
+                stone.velocity[0] += DECELERATION;
+            }
+            if v_y > DECELERATION {
+                stone.velocity[1] -= DECELERATION;
+            } else if v_y.abs() >= 0. && v_y.abs() <= DECELERATION {
+                stone.velocity[1] = 0.;
+            } else {
+                stone.velocity[1] += DECELERATION;
+            }
+
+            if stone.velocity[0] == 0. && stone.velocity[1] == 0. {
+                stone.set_state(StoneState::Stopped);
             }
         }
     }
