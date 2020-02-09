@@ -20,6 +20,10 @@ Here are my daily logs:
 
 ![final project, but still wip...](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_6_final.gif)
 
+`$ cargo build --release`
+
+`Finished release [optimized] target(s) in 8m 11s`
+
 ### Day 5 [2020-02-06]
 
 Couple days off. Watching Khan Academy videos on basic geometry, trig, calc and physics.

@@ -3,11 +3,10 @@
 // Or end game if we've reach all 6 turns.
 use amethyst::{
     core::transform::Transform,
-    core::SystemDesc,
     derive::SystemDesc,
     ecs::prelude::{
         Join, System, SystemData,
-        ReadExpect, World, Write, WriteStorage
+        ReadExpect, Write, WriteStorage
     },
     ui::UiText,
 };
@@ -26,7 +25,7 @@ impl<'s> System<'s> for ChangeTurnSystem {
         ReadExpect<'s, DebugText>
     );
 
-    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut stats, screen_text): Self::SystemData) {
+    fn run(&mut self, (mut stones, mut _locals, mut ui_text, mut stats, screen_text): Self::SystemData) {
         let mut all_stopped = true;
         for stone in stones.join() {
             if stone.state == StoneState::ReadyToLaunch {

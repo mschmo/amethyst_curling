@@ -1,7 +1,6 @@
 extern crate nalgebra as na;
 
 use amethyst::core::{Transform};
-use amethyst::core::geometry::{Plane};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{
     Join, System, SystemData,  // traits
@@ -88,12 +87,6 @@ impl<'s> System<'s> for LaunchStoneSystem {
                     }
                 } else if !action_down && self.is_charging {
                     // Launch!
-                    let start_coordinate = Some(Point3::new(
-                        mouse_position.0,
-                        mouse_position.1,
-                        camera_transform.translation().z,
-                    ));
-
                     let screen_dimensions = Vector2::new(dimensions.width(), dimensions.height());
                     let end_coordinate = Point3::new(
                         mouse_position.0,
@@ -101,30 +94,11 @@ impl<'s> System<'s> for LaunchStoneSystem {
                         camera_transform.translation().z,
                     );
 
-                    let start_world = camera.projection().screen_to_world_point(
-                        start_coordinate.expect("Wut?"),
-                        screen_dimensions,
-                        camera_transform,
-                    );
                     let end_world = camera.projection().screen_to_world_point(
                         end_coordinate,
                         screen_dimensions,
                         camera_transform,
                     );
-                    let plane = Plane::with_z(0.0);
-                    let start_world_plane = camera
-                        .projection()
-                        .screen_ray(
-                            start_coordinate.expect("Wut?").xy(),
-                            screen_dimensions,
-                            camera_transform,
-                        )
-                        .intersect_plane(&plane);
-                    let end_world_plane = camera
-                        .projection()
-                        .screen_ray(end_coordinate.xy(), screen_dimensions, camera_transform)
-                        .intersect_plane(&plane);
-
                     for (stone, transform) in (&mut stones, &transforms).join() {
                         if stone.state != StoneState::ReadyToLaunch {
                             continue;

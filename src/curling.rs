@@ -4,11 +4,10 @@ use amethyst::{
     ecs::prelude::{Component, DenseVecStorage, Entity},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
-               debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams}
+               debug_drawing::{DebugLines, DebugLinesParams}
     },
     ui::{Anchor, TtfFormat, UiText, UiTransform},
 };
-use crate::curling::StoneState::ReadyToLaunch;
 
 // main game struct
 pub struct Curling;
