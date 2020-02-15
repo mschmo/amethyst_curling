@@ -1,37 +1,32 @@
+use std::collections::HashMap;
+
 use amethyst::{
     core::{Transform},
-    ecs::prelude::{Join, ReadStorage, System, ReadExpect, Write, WriteStorage},
-    ui::UiText
+    ecs::prelude::{Join, ReadStorage, System, WriteStorage, Entities}
 };
 
-use crate::curling::{DebugScreen, DebugText, Stone, StoneColor, ARENA_HEIGHT, ARENA_WIDTH};
+use crate::curling::{Stone, StoneColor, ARENA_HEIGHT, ARENA_WIDTH, StoneState};
 
-fn get_color_id(color: StoneColor) -> f32 {
-    match color {
-        StoneColor::Blue => 1.0,
-        StoneColor::Red => 2.0
-    }
-}
 
 pub struct CollideStoneSystem;
 
 impl<'s> System<'s> for CollideStoneSystem {
-type SystemData = (
-    WriteStorage<'s, Stone>,
-    ReadStorage<'s, Transform>,
-    WriteStorage<'s, UiText>,
-    Write<'s, DebugScreen>,
-    ReadExpect<'s, DebugText>
-);
+    type SystemData = (
+        WriteStorage<'s, Stone>,
+        ReadStorage<'s, Transform>,
+        Entities<'s>
+    );
 
-    fn run(&mut self, (mut stones, transforms, mut ui_text, mut stats, screen_text): Self::SystemData) {
-        let mut stone_coords: Vec<[f32; 3]> = Vec::new();
-        for (s1, transform) in (&stones, &transforms).join() {
+    fn run(&mut self, (mut stones, transforms, entities): Self::SystemData) {
+        // {id: [[x, y], [vx, vy]]}
+        let mut stone_coords: HashMap<u32, [[f32; 2]; 2]> = HashMap::new();
+        for (stone, transform, entity) in (&stones, &transforms, &entities).join() {
             // println!("{:?} - {:?}", s1.color, transform.translation());
-            stone_coords.push([get_color_id(s1.color), transform.translation().x, transform.translation().y]);
+            stone_coords.insert(entity.id(),
+                                [[transform.translation().x, transform.translation().y], stone.velocity]);
         }
 
-        for (s1, transform) in (&mut stones, &transforms).join() {
+        for (s1, transform, entity) in (&mut stones, &transforms, &entities).join() {
             let s1_x = transform.translation().x;
             let s1_y = transform.translation().y;
 
@@ -44,21 +39,30 @@ type SystemData = (
             }
 
             // Check collision between stones
-            for coords in stone_coords.iter() {
-                if get_color_id(s1.color) == coords[0] {
+            for (entity_id, opp_stone) in &stone_coords {
+                if &entity.id() == entity_id {
                     continue;
                 }
-                let s2_x = coords[1];
-                let s2_y = coords[2];
+                let s2_x = opp_stone[0][0];
+                let s2_y = opp_stone[0][1];
                 let s1_s2_distance = ((s1_x - s2_x).powf(2.0) + (s1_y - s2_y).powf(2.0)).sqrt();
                 // println!("{:?} (s1) distance to coords {:?} = {:?}", s1.color, coords, s1_s2_distance);
 
-                stats.is_colliding = match s1_s2_distance {
-                    d if d <= s1.radius * 2.0 => true,
-                    _ => false
+                let is_colliding = match s1_s2_distance {
+                    d if d <= s1.radius * 2.0 => true,  _ => false
                 };
-                if let Some(text) = ui_text.get_mut(screen_text.collision_report) {
-                    text.text = format!("Collision: {}", stats.is_colliding.to_string());
+
+                if is_colliding {
+                    // Elastic collision
+                    // TODO: Don't always assume mass to be equal
+                    s1.velocity[0] = opp_stone[1][0];
+                    s1.velocity[1] = opp_stone[1][1];
+                    println!("Setting {:?} v = {:?}", s1.color, opp_stone[1]);
+                    if s1.velocity == [0. , 0.] {
+                        s1.set_state(StoneState::Stopped);
+                    } else {
+                        s1.set_state(StoneState::InPlay);
+                    }
                 }
             }
         }

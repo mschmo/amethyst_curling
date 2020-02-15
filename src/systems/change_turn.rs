@@ -11,7 +11,7 @@ use amethyst::{
     ui::UiText,
 };
 
-use crate::curling::{DebugScreen, DebugText, Stone, StoneState, StoneColor};
+use crate::curling::{GameStats, DebugText, Stone, StoneState, StoneColor};
 
 #[derive(SystemDesc)]
 pub struct ChangeTurnSystem;
@@ -21,7 +21,7 @@ impl<'s> System<'s> for ChangeTurnSystem {
         WriteStorage<'s, Stone>,
         WriteStorage<'s, Transform>,
         WriteStorage<'s, UiText>,
-        Write<'s, DebugScreen>,
+        Write<'s, GameStats>,
         ReadExpect<'s, DebugText>
     );
 

@@ -40,8 +40,6 @@ fn main() -> amethyst::Result<()> {
                 )
                 // RenderFlat2D plugin is used to render entities with a `SpriteRender` component.
                 .with_plugin(RenderFlat2D::default())
-                // TODO: Trying to use this to draw the line towards the mouse cursor when charging
-                // but I can't get it to work yet :(
                 .with_plugin(RenderDebugLines::default())
                 .with_plugin(RenderUi::default())
         )?
@@ -50,10 +48,8 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with(systems::LaunchStoneSystem::default(), "launch_stone_system", &["input_system"])
         .with(systems::MoveStoneSystem::default(), "move_stone_system", &["launch_stone_system"])
-        .with(systems::CollideStoneSystem, "collide_stone_system", &["launch_stone_system"])
+        .with(systems::CollideStoneSystem, "collide_stone_system", &["launch_stone_system", "move_stone_system"])
         .with(systems::ChangeTurnSystem, "change_turn_system", &["launch_stone_system"]);
-
-
 
     // root object of the game engine
     // within this object is everything needed to run the game

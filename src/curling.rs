@@ -1,7 +1,7 @@
 use amethyst::{
     assets::{AssetStorage, Loader, Handle},
     core::transform::Transform,
-    ecs::prelude::{Component, DenseVecStorage, Entity},
+    ecs::prelude::{Component, VecStorage, Entity},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture,
                debug_drawing::{DebugLines, DebugLinesParams}
@@ -16,6 +16,8 @@ pub struct Curling;
 pub const ARENA_WIDTH: f32 = 450. / 2.;
 pub const ARENA_HEIGHT: f32 = 800. / 2.;
 pub const STONE_RADIUS: f32 = 16. / 2.;
+// TODO: Think this would be interesting if it were adjustable
+pub const STONE_MASS: f32 = 40.;
 
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -32,27 +34,27 @@ pub enum StoneState {
 }
 
 // What properties make sense for a curling stone?
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Stone {
     pub state: StoneState,
     pub color: StoneColor,
     pub radius: f32,
     pub velocity: [f32; 2],
+    pub mass: f32
 }
 
 
 #[derive(Default)]
-pub struct DebugScreen {
+pub struct GameStats {
     pub turn_num: u32,
     pub in_play: bool,
-    pub is_colliding: bool
+    pub score: [u32; 2]
 }
 
 pub struct DebugText {
     pub turn_num_report: Entity,
     pub player_turn_report: Entity,
-    pub in_play_report: Entity,
-    pub collision_report: Entity
+    pub in_play_report: Entity
 }
 
 // This allows the app to close
@@ -86,7 +88,8 @@ impl Stone {
             state: StoneState::ReadyToLaunch,
             color,
             radius: STONE_RADIUS,
-            velocity: [0.0, 0.0]
+            velocity: [0.0, 0.0],
+            mass: STONE_MASS
         }
     }
 
@@ -99,13 +102,14 @@ impl Stone {
             state: StoneState::Stopped,
             color,
             radius: STONE_RADIUS,
-            velocity: [0.0, 0.0]
+            velocity: [0.0, 0.0],
+            mass: STONE_MASS
         }
     }
 }
 
 impl Component for Stone {
-    type Storage = DenseVecStorage<Self>;
+    type Storage = VecStorage<Self>;
 }
 
 
@@ -188,7 +192,6 @@ fn init_debug_screen(world: &mut World) {
     let turn_num_trans = _new_ui_transform("turn_num_report", -50.);
     let player_turn_trans = _new_ui_transform("player_turn_report", -65.);
     let in_play_trans = _new_ui_transform("in_play_report", -80.);
-    let collision_trans = _new_ui_transform("collision_report", -95.);
     let turn_num_report = world
         .create_entity()
         .with(turn_num_trans)
@@ -204,12 +207,7 @@ fn init_debug_screen(world: &mut World) {
         .with(in_play_trans)
         .with(UiText::new(font.clone(), "In Play: False".to_string(), [0., 0., 0., 1.], 12.,))
         .build();
-    let collision_report = world
-        .create_entity()
-        .with(collision_trans)
-        .with(UiText::new(font.clone(), "Collision: False".to_string(), [0., 0., 0., 1.], 12.,))
-        .build();
-    world.insert(DebugText { turn_num_report, player_turn_report, in_play_report, collision_report });
+    world.insert(DebugText { turn_num_report, player_turn_report, in_play_report });
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
