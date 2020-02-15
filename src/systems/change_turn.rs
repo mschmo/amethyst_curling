@@ -2,18 +2,18 @@
 // Increment turn. Create new stone.
 // Or end game if we've reach all 6 turns.
 use amethyst::{
-    assets::{AssetStorage, Handle},
+    assets::{Handle},
     core::transform::Transform,
     derive::SystemDesc,
     ecs::prelude::{
         Join, System, SystemData,
-        Read, ReadExpect, Write, WriteStorage, Entities, World
+        ReadExpect, Write, WriteStorage, Entities, ReadStorage
     },
-    renderer::{SpriteRender, SpriteSheet},
+    renderer::{SpriteRender},
     ui::UiText,
 };
 
-use crate::curling::{GameStats, DebugText, Stone, StoneState, StoneColor, CurlingSpriteSheet};
+use crate::curling::{GameStats, DebugText, Stone, StoneState, StoneColor, CurlingSpriteSheet, Target};
 
 
 pub const TOTAL_TURNS: u32 = 6;
@@ -27,13 +27,14 @@ impl<'s> System<'s> for ChangeTurnSystem {
         WriteStorage<'s, Transform>,
         WriteStorage<'s, UiText>,
         WriteStorage<'s, SpriteRender>,
+        ReadStorage<'s, Target>,
         Write<'s, GameStats>,
         ReadExpect<'s, DebugText>,
         ReadExpect<'s, CurlingSpriteSheet>,
         Entities<'s>
     );
 
-    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut sprites, mut stats, screen_text, sprite_sheet, entities): Self::SystemData) {
+    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut sprites, targets, mut stats, screen_text, sprite_sheet, entities): Self::SystemData) {
         let mut all_stopped = true;
         for stone in stones.join() {
             if stone.state == StoneState::ReadyToLaunch {
@@ -50,6 +51,28 @@ impl<'s> System<'s> for ChangeTurnSystem {
             // All stones have stopped. Next turn...
             stats.in_play = false;
             stats.turn_num += 1;
+
+            // Calculate the score
+            stats.score = [0, 0];
+            for (t, t_loc) in (&targets, &locals).join() {
+                for (s, s_loc) in (&stones, &locals).join() {
+                    let x_dist = s_loc.translation().x - t_loc.translation().x;
+                    let y_dist = s_loc.translation().y - t_loc.translation().y;
+                    // Pythagorean theorem
+                    match (x_dist.powf(2.0) + y_dist.powf(2.0)).sqrt() {
+                        d if d <= t.radius + s.radius => {
+                            let color_idx = match s.color {
+                                StoneColor::Blue => 0, StoneColor::Red => 1
+                            };
+                            stats.score[color_idx] += 1;
+                        },
+                        _ => ()
+                    };
+                }
+            }
+            if let Some(text) = ui_text.get_mut(screen_text.score_report) {
+                text.text = format!("Red: {} | Blue: {}", stats.score[1].to_string(), stats.score[0].to_string());
+            }
 
             if stats.turn_num >= TOTAL_TURNS {
                 // Create a blue stone at the starting position

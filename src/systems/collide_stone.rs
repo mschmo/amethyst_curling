@@ -5,7 +5,7 @@ use amethyst::{
     ecs::prelude::{Join, ReadStorage, System, WriteStorage, Entities}
 };
 
-use crate::curling::{Stone, StoneColor, ARENA_HEIGHT, ARENA_WIDTH, StoneState};
+use crate::curling::{Stone, ARENA_HEIGHT, ARENA_WIDTH, StoneState};
 
 
 pub struct CollideStoneSystem;

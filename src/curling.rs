@@ -17,6 +17,7 @@ pub struct Curling;
 pub const ARENA_WIDTH: f32 = 450. / 2.;
 pub const ARENA_HEIGHT: f32 = 800. / 2.;
 pub const STONE_RADIUS: f32 = 16. / 2.;
+pub const TARGET_RADIUS: f32 = 128. / 2.;
 // TODO: Think this would be interesting if it were adjustable
 pub const STONE_MASS: f32 = 40.;
 
@@ -44,91 +45,8 @@ pub struct Stone {
     pub mass: f32
 }
 
-
-#[derive(Default)]
-pub struct GameStats {
-    pub turn_num: u32,
-    pub in_play: bool,
-    pub score: [u32; 2]
-}
-
-pub struct DebugText {
-    pub turn_num_report: Entity,
-    pub player_turn_report: Entity,
-    pub in_play_report: Entity
-}
-
-pub struct CurlingSpriteSheet {
-    pub handle: Handle<SpriteSheet>
-}
-
-impl CurlingSpriteSheet {
-    pub fn new(handle: Handle<SpriteSheet>) -> CurlingSpriteSheet {
-        CurlingSpriteSheet { handle }
-    }
-}
-
-// This allows the app to close
-impl SimpleState for Curling {
-    // `data` os a structure given to all state methods
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
-        let sprite_sheet_handle = load_sprite_sheet(world);
-        world.insert(CurlingSpriteSheet::new(sprite_sheet_handle.clone()));
-
-        // Setup debug lines as a resource
-        world.insert(DebugLines::new());
-        // Configure width of lines. Optional step
-        world.insert(DebugLinesParams { line_width: 2.0 });
-
-
-        // TODO: Don't just clone everything
-        /// init_stones(world, sprite_sheet_handle.clone());
-        self._place_stone(world, StoneColor::Blue, sprite_sheet_handle.clone());
-        self._init_target(world, sprite_sheet_handle.clone());
-        init_camera(world);
-        init_debug_screen(world);
-    }
-}
-
-
-
-impl Curling {
-    pub fn _place_stone(&self, world: &mut World, color: StoneColor, sprite_sheet_handle: Handle<SpriteSheet>) {
-        // TODO: Probably dumb loading the sprite sheet every time.
-        // Read<'s, AssetStorage<SpriteSheet>>,
-        let sprite_number = match color {
-            StoneColor::Blue => 0,
-            StoneColor::Red => 1
-        };
-        let sprite_render = SpriteRender {
-            sprite_sheet: sprite_sheet_handle.clone(),
-            sprite_number,
-        };
-
-        world
-            .create_entity()
-            .with(sprite_render.clone())
-            .with(Stone::new(color))
-            .with(Stone::get_starting_pos())
-            .build();
-    }
-
-    fn _init_target(&self, world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
-        let sprite_render = SpriteRender {
-            sprite_sheet: sprite_sheet_handle.clone(),
-            sprite_number: 2,
-        };
-
-        let mut transform = Transform::default();
-        transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - (ARENA_HEIGHT / 5.0), 0.0);
-
-        world
-            .create_entity()
-            .with(sprite_render.clone())
-            .with(transform)
-            .build();
-    }
+impl Component for Stone {
+    type Storage = VecStorage<Self>;
 }
 
 impl Stone {
@@ -163,8 +81,106 @@ impl Stone {
     }
 }
 
-impl Component for Stone {
+
+#[derive(Copy, Clone, Debug)]
+pub struct Target {
+    pub radius: f32
+}
+
+impl Component for Target {
     type Storage = VecStorage<Self>;
+}
+
+impl Target {
+    fn new() -> Target {
+        Target {
+            radius: TARGET_RADIUS
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct GameStats {
+    pub turn_num: u32,
+    pub in_play: bool,
+    /// [<Blue Score>, <Red Score>]
+    pub score: [u32; 2]
+}
+
+pub struct DebugText {
+    pub turn_num_report: Entity,
+    pub player_turn_report: Entity,
+    pub in_play_report: Entity,
+    pub score_report: Entity
+}
+
+pub struct CurlingSpriteSheet {
+    pub handle: Handle<SpriteSheet>
+}
+
+impl CurlingSpriteSheet {
+    pub fn new(handle: Handle<SpriteSheet>) -> CurlingSpriteSheet {
+        CurlingSpriteSheet { handle }
+    }
+}
+
+// This allows the app to close
+impl SimpleState for Curling {
+    // `data` os a structure given to all state methods
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+        let world = data.world;
+        let sprite_sheet_handle = load_sprite_sheet(world);
+        world.insert(CurlingSpriteSheet::new(sprite_sheet_handle.clone()));
+
+        // Setup debug lines as a resource
+        world.insert(DebugLines::new());
+        // Configure width of lines. Optional step
+        world.insert(DebugLinesParams { line_width: 2.0 });
+
+        // TODO: Don't just clone everything
+        self._place_stone(world, StoneColor::Blue, sprite_sheet_handle.clone());
+        self._init_target(world, sprite_sheet_handle.clone());
+        init_camera(world);
+        init_debug_screen(world);
+    }
+}
+
+
+
+impl Curling {
+    pub fn _place_stone(&self, world: &mut World, color: StoneColor, sprite_sheet_handle: Handle<SpriteSheet>) {
+        let sprite_number = match color {
+            StoneColor::Blue => 0,
+            StoneColor::Red => 1
+        };
+        let sprite_render = SpriteRender {
+            sprite_sheet: sprite_sheet_handle.clone(),
+            sprite_number,
+        };
+
+        world
+            .create_entity()
+            .with(sprite_render.clone())
+            .with(Stone::new(color))
+            .with(Stone::get_starting_pos())
+            .build();
+    }
+
+    fn _init_target(&self, world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
+        let sprite_render = SpriteRender {
+            sprite_sheet: sprite_sheet_handle,
+            sprite_number: 2,
+        };
+
+        let mut transform = Transform::default();
+        transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - (ARENA_HEIGHT / 5.0), 0.0);
+        world
+            .create_entity()
+            .with(sprite_render.clone())
+            .with(Target::new())
+            .with(transform)
+            .build();
+    }
 }
 
 
@@ -181,27 +197,11 @@ fn init_camera(world: &mut World) {
         .build();
 }
 
-fn init_target(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
-    let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 2,
-    };
-
-    let mut transform = Transform::default();
-    transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - (ARENA_HEIGHT / 5.0), 0.0);
-
-    world
-        .create_entity()
-        .with(sprite_render.clone())
-        .with(transform)
-        .build();
-}
-
 fn _new_ui_transform(report_name: &str, y: f32) -> UiTransform {
      UiTransform::new(
         report_name.to_string(),
         Anchor::Middle, Anchor::Middle,
-        -50., y, 1., 200., 50.
+        -50., y, 1., 300., 50.
     )
 }
 
@@ -214,24 +214,30 @@ fn init_debug_screen(world: &mut World) {
         &world.read_resource(),
     );
     let turn_num_trans = _new_ui_transform("turn_num_report", -50.);
-    let player_turn_trans = _new_ui_transform("player_turn_report", -65.);
-    let in_play_trans = _new_ui_transform("in_play_report", -80.);
+    let player_turn_trans = _new_ui_transform("player_turn_report", -80.);
+    let in_play_trans = _new_ui_transform("in_play_report", -110.);
+    let score_trans = _new_ui_transform("score_report", -140.);
     let turn_num_report = world
         .create_entity()
         .with(turn_num_trans)
-        .with(UiText::new(font.clone(), "Turn: 0".to_string(), [0., 0., 0., 1.], 12.,))
+        .with(UiText::new(font.clone(), "Turn: 0".to_string(), [0., 0., 0., 1.], 24.,))
         .build();
     let player_turn_report = world
         .create_entity()
         .with(player_turn_trans)
-        .with(UiText::new(font.clone(), "Player: Blue".to_string(), [0., 0., 0., 1.], 12.,))
+        .with(UiText::new(font.clone(), "Player: Blue".to_string(), [0., 0., 0., 1.], 24.,))
         .build();
     let in_play_report = world
         .create_entity()
         .with(in_play_trans)
-        .with(UiText::new(font.clone(), "In Play: False".to_string(), [0., 0., 0., 1.], 12.,))
+        .with(UiText::new(font.clone(), "In Play: False".to_string(), [0., 0., 0., 1.], 24.,))
         .build();
-    world.insert(DebugText { turn_num_report, player_turn_report, in_play_report });
+    let score_report = world
+        .create_entity()
+        .with(score_trans)
+        .with(UiText::new(font.clone(), "Red: 0 | Blue: 0".to_string(), [0., 0., 0., 1.], 24.,))
+        .build();
+    world.insert(DebugText { turn_num_report, player_turn_report, in_play_report, score_report});
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {

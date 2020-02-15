@@ -44,6 +44,27 @@ Ok cool we also go that working.
 
 Ok so what now? Scoring. Let's keep score.
 
+We can do a similar collision detection between the target and the stones:
+```rust
+for (t, t_loc) in (&targets, &locals).join() {
+    for (s, s_loc) in (&stones, &locals).join() {
+        let x_dist = s_loc.translation().x - t_loc.translation().x;
+        let y_dist = s_loc.translation().y - t_loc.translation().y;
+        // Pythagorean theorem
+        match (sx_dist.powf(2.0) + y_dist.powf(2.0)).sqrt() {
+            d if d <= t.radius + s.radius => {
+                // For each stone that collides with the target, increase the score by 1
+                let color_idx = match s.color {
+                    StoneColor::Blue => 0, StoneColor::Red => 1
+                };
+                stats.score[color_idx] += 1;
+            },
+            _ => ()
+        };
+    }
+}
+```
+
 ### Day 6 [2020-02-08]
 
 * UI Text
