@@ -12,7 +12,7 @@ Here are my daily logs:
 * [Day 6 - 2/08](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-6-2020-02-08)
 
 ---
-### Day 7 [2020]
+### Day ??? [2020]
 
 I had fun with this project, but I don't feel I've had enough time to accomplish everything I wanted during the jam. So I am going to continue working on this game for personal enjoyment and learning.
 
@@ -34,6 +34,15 @@ And cool, collisions actually appear to be working:
 ![Elastic collisions](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_7_elastic_col.gif)
 
 Fair bit of cleanup. Using `Entities<'s>` to store unique id for collision comparison.
+
+How about actually creating stones at the start of a new turn? Let's do that now.
+
+Ok cool we also go that working.
+* `entities.build_entity()`
+* Storing the `SpriteRender` handle in a resource so we can grab it in the system
+* Max out at 6 turns (3 slides each)
+
+Ok so what now? Scoring. Let's keep score.
 
 ### Day 6 [2020-02-08]
 

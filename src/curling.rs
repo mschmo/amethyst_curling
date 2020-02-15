@@ -10,6 +10,7 @@ use amethyst::{
 };
 
 // main game struct
+#[derive(Default)]
 pub struct Curling;
 
 // display.ron => dimensions: Some((450, 800)),
@@ -57,33 +58,81 @@ pub struct DebugText {
     pub in_play_report: Entity
 }
 
+pub struct CurlingSpriteSheet {
+    pub handle: Handle<SpriteSheet>
+}
+
+impl CurlingSpriteSheet {
+    pub fn new(handle: Handle<SpriteSheet>) -> CurlingSpriteSheet {
+        CurlingSpriteSheet { handle }
+    }
+}
+
 // This allows the app to close
 impl SimpleState for Curling {
-
     // `data` os a structure given to all state methods
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let world = data.world;
         let sprite_sheet_handle = load_sprite_sheet(world);
+        world.insert(CurlingSpriteSheet::new(sprite_sheet_handle.clone()));
 
         // Setup debug lines as a resource
         world.insert(DebugLines::new());
         // Configure width of lines. Optional step
         world.insert(DebugLinesParams { line_width: 2.0 });
 
-        // There must be a better way to do this. And there is...
-        // Once we add systems, any component that a system operates on will also be registered.
-        world.register::<Stone>();
+
         // TODO: Don't just clone everything
-        init_stones(world, sprite_sheet_handle.clone());
-        init_target(world, sprite_sheet_handle);
+        /// init_stones(world, sprite_sheet_handle.clone());
+        self._place_stone(world, StoneColor::Blue, sprite_sheet_handle.clone());
+        self._init_target(world, sprite_sheet_handle.clone());
         init_camera(world);
         init_debug_screen(world);
     }
+}
 
+
+
+impl Curling {
+    pub fn _place_stone(&self, world: &mut World, color: StoneColor, sprite_sheet_handle: Handle<SpriteSheet>) {
+        // TODO: Probably dumb loading the sprite sheet every time.
+        // Read<'s, AssetStorage<SpriteSheet>>,
+        let sprite_number = match color {
+            StoneColor::Blue => 0,
+            StoneColor::Red => 1
+        };
+        let sprite_render = SpriteRender {
+            sprite_sheet: sprite_sheet_handle.clone(),
+            sprite_number,
+        };
+
+        world
+            .create_entity()
+            .with(sprite_render.clone())
+            .with(Stone::new(color))
+            .with(Stone::get_starting_pos())
+            .build();
+    }
+
+    fn _init_target(&self, world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
+        let sprite_render = SpriteRender {
+            sprite_sheet: sprite_sheet_handle.clone(),
+            sprite_number: 2,
+        };
+
+        let mut transform = Transform::default();
+        transform.set_translation_xyz(ARENA_WIDTH / 2.0, ARENA_HEIGHT - (ARENA_HEIGHT / 5.0), 0.0);
+
+        world
+            .create_entity()
+            .with(sprite_render.clone())
+            .with(transform)
+            .build();
+    }
 }
 
 impl Stone {
-    fn new(color: StoneColor) -> Stone {
+    pub fn new(color: StoneColor) -> Stone {
         Stone {
             state: StoneState::ReadyToLaunch,
             color,
@@ -95,6 +144,12 @@ impl Stone {
 
     pub fn set_state(&mut self, state: StoneState) {
         self.state = state;
+    }
+
+    pub fn get_starting_pos() -> Transform {
+        let mut transform = Transform::default();
+        transform.set_translation_xyz(ARENA_WIDTH / 2., ARENA_HEIGHT / 5., 0.5);
+        return transform;
     }
 
     fn _dbg_new_stopped(color: StoneColor) -> Stone {
@@ -123,37 +178,6 @@ fn init_camera(world: &mut World) {
         .create_entity()
         .with(Camera::standard_2d(ARENA_WIDTH, ARENA_HEIGHT))
         .with(transform)
-        .build();
-}
-
-
-fn init_stones(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
-    let sprite_render_blue = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 0,
-    };
-    let sprite_render_red = SpriteRender {
-        sprite_sheet: sprite_sheet.clone(),
-        sprite_number: 1,
-    };
-
-    let mut transform_blue = Transform::default();
-    let mut transform_red = Transform::default();
-    transform_blue.set_translation_xyz(ARENA_WIDTH / 2. - 20., ARENA_HEIGHT / 5., 0.);
-    transform_red.set_translation_xyz(ARENA_WIDTH / 2. + 20., ARENA_HEIGHT / 5., 0.);
-
-    world
-        .create_entity()
-        .with(sprite_render_blue.clone())
-        .with(Stone::new(StoneColor::Blue))
-        .with(transform_blue)
-        .build();
-
-    world
-        .create_entity()
-        .with(sprite_render_red.clone())
-        .with(Stone::_dbg_new_stopped(StoneColor::Red))
-        .with(transform_red)
         .build();
 }
 

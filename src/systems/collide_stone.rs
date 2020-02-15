@@ -57,7 +57,7 @@ impl<'s> System<'s> for CollideStoneSystem {
                     // TODO: Don't always assume mass to be equal
                     s1.velocity[0] = opp_stone[1][0];
                     s1.velocity[1] = opp_stone[1][1];
-                    println!("Setting {:?} v = {:?}", s1.color, opp_stone[1]);
+                    // println!("Setting {:?} v = {:?}", s1.color, opp_stone[1]);
                     if s1.velocity == [0. , 0.] {
                         s1.set_state(StoneState::Stopped);
                     } else {
