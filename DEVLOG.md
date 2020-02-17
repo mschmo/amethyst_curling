@@ -12,7 +12,35 @@ Here are my daily logs:
 * [Day 6 - 2/08](https://github.com/mschmo/amethyst_curling/blob/master/DEVLOG.md#day-6-2020-02-08)
 
 ---
-### Day ??? [2020]
+### Another day [2020-02-15]
+
+TIL about curling scores, it's not at all like corn-hole. The rings do not award for different points.
+
+Getting and ordering the stone distances:
+```rust
+let mut stone_distances: Vec<(StoneColor, f32)> = Vec::new();
+// lol - guess we can implement a multi-target mode
+for (t, t_loc) in (&targets, &locals).join() {
+    for (s, s_loc) in (&stones, &locals).join() {
+        // Pythagorean theorem
+        let x_dist = s_loc.translation().x - t_loc.translation().x;
+        let y_dist = s_loc.translation().y - t_loc.translation().y;
+        match (x_dist.powf(2.0) + y_dist.powf(2.0)).sqrt() {
+            d if d <= t.radius + s.radius => {
+                let color_idx = match s.color {
+                    StoneColor::Blue => 0, StoneColor::Red => 1
+                };
+                stats.score[color_idx] += 1;
+                stone_distances.push((s.color, d));
+            },
+            _ => ()
+        };
+    }
+}
+stone_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+```
+
+### Day ??? [2020-??-??]
 
 I had fun with this project, but I don't feel I've had enough time to accomplish everything I wanted during the jam. So I am going to continue working on this game for personal enjoyment and learning.
 
@@ -64,6 +92,9 @@ for (t, t_loc) in (&targets, &locals).join() {
     }
 }
 ```
+
+TODO:
+* Learn more about "channels"
 
 ### Day 6 [2020-02-08]
 

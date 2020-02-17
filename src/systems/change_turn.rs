@@ -53,26 +53,62 @@ impl<'s> System<'s> for ChangeTurnSystem {
             stats.turn_num += 1;
 
             // Calculate the score
+            // TODO: BREAK THIS OUT INTO ITS OWN SYSTEM!!!
             stats.score = [0, 0];
+
+            let mut stone_distances: Vec<(StoneColor, f32)> = Vec::new();
+            // lol - guess it would be easy to have a multi target mode
             for (t, t_loc) in (&targets, &locals).join() {
                 for (s, s_loc) in (&stones, &locals).join() {
                     let x_dist = s_loc.translation().x - t_loc.translation().x;
                     let y_dist = s_loc.translation().y - t_loc.translation().y;
                     // Pythagorean theorem
+
+                    // Rules:
+                    // 1. Only stones that are on target are eligible for point
+                    // 2. Closest stone to button is the winner and gets 1 point
+                    // per stone that is closer than the opponent's closest.
                     match (x_dist.powf(2.0) + y_dist.powf(2.0)).sqrt() {
                         d if d <= t.radius + s.radius => {
                             let color_idx = match s.color {
                                 StoneColor::Blue => 0, StoneColor::Red => 1
                             };
                             stats.score[color_idx] += 1;
+                            stone_distances.push((s.color, d));
                         },
                         _ => ()
                     };
                 }
             }
+            stone_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+            println!("Stone Distances (Ordered) = {:?}", stone_distances);
+
             if let Some(text) = ui_text.get_mut(screen_text.score_report) {
                 text.text = format!("Red: {} | Blue: {}", stats.score[1].to_string(), stats.score[0].to_string());
             }
+
+            // ok now assign score based on official rules
+            let mut score = 0;
+            let mut winner: Option<StoneColor> = None;
+            for (i, distance_data) in stone_distances.iter().enumerate() {
+                if i == 0 {
+                    winner = Some(distance_data.0);
+                    score += 1;
+                    continue;
+                }
+                match winner {
+                    Some(color) => {
+                        if color != distance_data.0 {
+                            break;
+                        }
+                        score += 1;
+                    },
+                    None => break
+                }
+            }
+            println!("The winner is {:?} with a score of {}", winner.unwrap(), score);
+
+            //// --- END SCORE SECTION --- ////
 
             if stats.turn_num >= TOTAL_TURNS {
                 // Create a blue stone at the starting position
