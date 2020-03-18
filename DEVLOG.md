@@ -40,6 +40,28 @@ for (t, t_loc) in (&targets, &locals).join() {
 stone_distances.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
 ```
 
+Learning about `Dispatcher`. How can we control the game's state? After 3 stones are tossed by each team, my goal is to restart from the beginning.
+
+> Dispatchers are the heart of the ECS infrastructure.
+
+Well that sounds important. Right now all of our systems are firing, like, basically all the time. The launch system has this check at the start of its `run` method which iterates over every stone checking if there is on that is a "ready to launch" state:
+```rust
+let mut is_stone_ready_for_launch = false;
+for stone in stones.join() {
+    if stone.state == StoneState::ReadyToLaunch {
+        is_stone_ready_for_launch = true;
+        break
+    }
+}
+if !is_stone_ready_for_launch {
+    return;
+}
+```
+
+Learning about the `EventChannel`. This sounds like a way for one system to alert other systems of some kind of event.
+
+Also learning about `State`. This is how we can switch between a "GamePlayState" and a "PauseState".
+
 ### Day ??? [2020-??-??]
 
 I had fun with this project, but I don't feel I've had enough time to accomplish everything I wanted during the jam. So I am going to continue working on this game for personal enjoyment and learning.
@@ -303,8 +325,6 @@ After messing around with the values of `ARENA_WIDTH` and `ARENA_HEIGHT` (used f
 ![done for the day](https://raw.githubusercontent.com/mschmo/amethyst_curling/master/screenshots/day_2_final.png)
 
 But cool, I feel good leaving it here for the day. Tomorrow we will start to make things move!
-  
----
 
 ### Day 1 [2020-01-28]  
 Ok so we're a few days into this jam and I haven't started yet. It took me a little while to choose both the type of game I wanted to make as well as with what I wanted to make it with. Overall I want this to be a learning experience, which honestly any game or tool would be since I'm not very familiar with game development. I've mostly copied and studied online tutorials in the past and never truly completed a full game purely on my own. I'm excited to begin.    

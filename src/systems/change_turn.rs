@@ -11,9 +11,10 @@ use amethyst::{
     },
     renderer::{SpriteRender},
     ui::UiText,
+    utils::removal::{Removal}
 };
 
-use crate::curling::{GameStats, DebugText, Stone, StoneState, StoneColor, CurlingSpriteSheet, Target};
+use crate::curling::{GameStats, DebugText, Stone, StoneState, StoneColor, CurlingSpriteSheet, Target, RemovalId};
 
 
 pub const TOTAL_TURNS: u32 = 6;
@@ -22,11 +23,13 @@ pub const TOTAL_TURNS: u32 = 6;
 pub struct ChangeTurnSystem;
 
 impl<'s> System<'s> for ChangeTurnSystem {
+    // This is getting a little out of control...
     type SystemData = (
         WriteStorage<'s, Stone>,
         WriteStorage<'s, Transform>,
         WriteStorage<'s, UiText>,
         WriteStorage<'s, SpriteRender>,
+        WriteStorage<'s, Removal<RemovalId>>,
         ReadStorage<'s, Target>,
         Write<'s, GameStats>,
         ReadExpect<'s, DebugText>,
@@ -34,7 +37,10 @@ impl<'s> System<'s> for ChangeTurnSystem {
         Entities<'s>
     );
 
-    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut sprites, targets, mut stats, screen_text, sprite_sheet, entities): Self::SystemData) {
+    fn run(&mut self, (mut stones, mut locals, mut ui_text, mut sprites, mut removal, targets, mut stats, screen_text, sprite_sheet, entities): Self::SystemData) {
+        if stats.game_is_over {
+            return;
+        }
         let mut all_stopped = true;
         for stone in stones.join() {
             if stone.state == StoneState::ReadyToLaunch {
@@ -106,13 +112,15 @@ impl<'s> System<'s> for ChangeTurnSystem {
                     None => break
                 }
             }
-            println!("The winner is {:?} with a score of {}", winner.unwrap(), score);
+            stats.winner = winner;
+            stats.winner_score = score;
 
             //// --- END SCORE SECTION --- ////
-
             if stats.turn_num >= TOTAL_TURNS {
-                // Create a blue stone at the starting position
-                return
+                // End the game
+                println!("The game has ended!");
+                stats.game_is_over = true;
+                return;
             }
 
             // 3 total stones each
@@ -127,6 +135,7 @@ impl<'s> System<'s> for ChangeTurnSystem {
                     .with(sr.clone(), &mut sprites)
                     .with(Stone::new(StoneColor::Blue), &mut stones)
                     .with(Stone::get_starting_pos(), &mut locals)
+                    .with(Removal::new(RemovalId::GamePlayEntity), &mut removal)
                     .build();
             } else {
                 if let Some(text) = ui_text.get_mut(screen_text.player_turn_report) {
@@ -137,6 +146,7 @@ impl<'s> System<'s> for ChangeTurnSystem {
                     .with(sr.clone(), &mut sprites)
                     .with(Stone::new(StoneColor::Red), &mut stones)
                     .with(Stone::get_starting_pos(), &mut locals)
+                    .with(Removal::new(RemovalId::GamePlayEntity), &mut removal)
                     .build();
             }
         } else {
